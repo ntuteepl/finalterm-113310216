@@ -1,1 +1,613 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/_v8RbUGg)
+#include<iostream>
+#include<cmath>
+#include <vector>
+#include <cstdlib>
+using namespace std;
+class Equipment {
+public:
+    string name;
+    int hpBonus;
+    int powerBonus;
+    int defenseBonus;
+    int mpBonus;
+
+    Equipment(string n, int hpB, int pB, int dB, int mB)
+        : name(n), hpBonus(hpB), powerBonus(pB), defenseBonus(dB), mpBonus(mB) {
+    }
+};
+class Character {
+protected:
+    static const int EXP_LV = 100;
+    string name;
+    int difficultly;
+    int hp;
+    int maxHP;  // 儲存初始血量
+    int baseHP; // 初始血量
+    int level;
+    int exp;
+    int power;
+    int basePower;  // 初始攻擊力
+    int defense;
+    int baseDefense;  // 初始防禦力
+    int gold;  // 新增金錢屬性
+    int stunnedTurns;  // 修改為 int 類型，追蹤暈眩回合數
+    Equipment* equipment;  // 新增裝備屬性
+    void levelUp(int hInc, int pInc, int dInc);  // 升級方法
+public:
+    Character(string n, int lv, int h, int po, int de);
+    virtual void print();  // 顯示角色資訊
+    virtual void beatMonster(int exp) = 0;  // 擊敗怪物後獲得經驗
+    virtual void setHP(int) = 0;  // 設置血量
+    virtual int getHP() = 0;  // 獲取血量
+    virtual int getAttack() = 0;  // 獲取攻擊力
+    virtual int getDefense() = 0;  // 獲取防禦力
+    virtual void useSkill1(Character* target) = 0;  // 使用技能1
+    virtual void useSkill2(Character* target) = 0;  // 使用技能2
+    void setStunned(int turns);  // 設置暈眩狀態
+    bool isStunned() const;  // 獲取暈眩狀態
+    void equip(Equipment* e);  // 裝備裝備
+    void resetAttributes();  // 重置屬性
+    string getName();  // 獲取名字
+    int getMaxHP() const { return maxHP; }  // 獲取最大血量
+    int getGold() const { return gold; }  // 獲取金錢
+    void addGold(int amount) { gold += amount; }  // 增加金錢
+    void spendGold(int amount);  // 花費金錢
+};
+
+Character::Character(string n, int lv, int h, int po, int de) : name(n), level(lv), exp(pow(lv - 1, 2)* EXP_LV), hp(h), maxHP(h), baseHP(h), power(po), basePower(po), defense(de), baseDefense(de), gold(300), stunnedTurns(0) {}
+
+bool Character::isStunned() const {
+    return stunnedTurns > 0;
+}
+
+void Character::setStunned(int turns) {
+    this->stunnedTurns = turns;
+}
+
+void Character::equip(Equipment* e) {
+    equipment = e;
+    hp += e->hpBonus;
+    maxHP += e->hpBonus;
+    power += e->powerBonus;
+    defense += e->defenseBonus;
+}
+
+string Character::getName() {
+    return this->name;
+}
+
+void Character::levelUp(int hInc, int pInc, int dInc) {
+    this->level++;
+    this->hp += hInc;
+    this->maxHP += hInc;
+    this->power += pInc;
+    this->defense += dInc;
+}
+
+void Character::resetAttributes() {
+    this->hp = this->baseHP * this->level;
+    this->maxHP = this->baseHP * this->level;
+    this->power = this->basePower * this->level;
+    this->defense = this->baseDefense * this->level;
+}
+
+void Character::print() {
+    cout << this->name << ": " << this->level << " (" << this->exp << "/" << pow(this->level, 2) * EXP_LV << "), ";
+    if (this->hp >= 0)
+        cout << this->hp;
+    else
+        cout << "0";
+
+    cout << "-" << this->power << "-" << this->defense;
+	if (this->name != "Monster")
+		cout << " , Gold: " << this->gold << "\n";
+}
+
+void Character::spendGold(int amount) {
+    if (gold >= amount) {
+        gold -= amount;
+    }
+    else {
+        cout << "Not enough gold!" << endl;
+    }
+}
+class Warrior : public Character {
+private:
+    static const int HP_LV = 100;
+    static const int PO_LV = 10;
+    static const int DE_LV = 5;
+public:
+    Warrior(string n, int lv = 1) : Character(n, lv, HP_LV, PO_LV, DE_LV) {}
+    void print() { cout << "Warrior "; Character::print(); }
+    int getHP() { return hp; }
+    void setHP(int hp) { this->hp = hp; }
+    int getAttack() { return power; }
+    int getDefense() { return defense; }
+    void useSkill1(Character* target) { target->setHP(target->getHP() - (power * 1.5)); cout << "(Warrior) uses Strong Attack and deals " << power * 1.5 << " damage to the monster!" << endl; } // 強力攻擊
+    void useSkill2(Character* target) { defense += 10; cout << "(Warrior) uses Defensive Stance and increases defense by 10!" << endl; } // 防禦姿態
+    void beatMonster(int exp) // function overriding
+    {
+        this->exp += exp;
+        while (this->exp >= pow(this->level, 2) * EXP_LV)
+            this->levelUp(HP_LV, PO_LV, DE_LV);
+    }
+};
+class Wizard : public Character {
+private:
+    static const int HP_LV = 80;
+    static const int PO_LV = 12;
+    static const int DE_LV = 15;
+public:
+    Wizard(string n, int lv = 1) : Character(n, lv, lv* HP_LV, lv* PO_LV, lv* DE_LV) {}
+    void print() { cout << "Wizard "; Character::print(); }
+    int getHP() { return hp; }
+    void setHP(int hp) { this->hp = hp; }
+    int getDefense() { return defense; }
+    int getAttack() { return defense; }
+    void useSkill1(Character* target) { target->setHP(target->getHP() - (power * 2)); cout << "(Wizard) uses Fireball and deals " << power * 2 << " damage to the monster!" << endl; } // 火球術
+    void useSkill2(Character* target) { defense += 20; cout << "(Wizard) uses Magic Shield and increases defense by 20!" << endl; } // 魔法護盾
+    void beatMonster(int exp)
+    {
+        this->exp += exp;
+        while (this->exp >= pow(this->level, 2) * EXP_LV)
+            this->levelUp(HP_LV, PO_LV, DE_LV);
+    }
+};
+class Tank : public Character {
+private:
+    static const int HP_LV = 150;
+    static const int PO_LV = 5;
+    static const int DE_LV = 20;
+public:
+    Tank(string n, int lv = 1) : Character(n, lv, lv* HP_LV, lv* PO_LV, lv* DE_LV) {}
+    void print() { cout << "Tank "; Character::print(); }
+    int getHP() { return hp; }
+    void setHP(int hp) { this->hp = hp; }
+    int getDefense() { return defense; }
+    int getAttack() { return defense; }
+    void useSkill1(Character* target) { target->setHP(target->getHP() - (power * 1.2)); cout << "(Tank) uses Taunt and deals " << power * 1.2 << " damage to the monster!" << endl; } // 嘲諷
+    void useSkill2(Character* target) { hp += 50; maxHP += 50; cout << "(Tank) uses Resilience and increases HP by 50!" << endl; } // 堅韌
+    void beatMonster(int exp)
+    {
+        this->exp += exp;
+        while (this->exp >= pow(this->level, 2) * EXP_LV)
+            this->levelUp(HP_LV, PO_LV, DE_LV);
+    }
+};
+
+class Assassin : public Character {
+private:
+    static const int HP_LV = 90;
+    static const int PO_LV = 15;
+    static const int DE_LV = 10;
+public:
+    Assassin(string n, int lv = 1) : Character(n, lv, lv* HP_LV, lv* PO_LV, lv* DE_LV) {}
+    void print() { cout << "Assassin "; Character::print(); }
+    int getHP() { return hp; }
+    void setHP(int hp) { this->hp = hp; }
+    int getDefense() { return defense; }
+    int getAttack() { return power; }
+
+    void useSkill1(Character* target) { target->setHP(target->getHP() - (power * 2)); cout << "(Assassin) uses Backstab and deals " << power * 2 << " damage to the monster!" << endl; } // 背刺
+    void useSkill2(Character* target) {
+        target->setStunned(1);
+        cout << "(Assassin) uses Stun and stuns the monster!" << endl;
+    } // 暈眩
+    void beatMonster(int exp)
+    {
+        this->exp += exp;
+        while (this->exp >= pow(this->level, 2) * EXP_LV)
+            this->levelUp(HP_LV, PO_LV, DE_LV);
+    }
+};
+
+class Healer : public Character {
+private:
+    static const int HP_LV = 100;
+    static const int PO_LV = 2;
+    static const int DE_LV = 10;
+public:
+    Healer(string n, int lv = 1) : Character(n, lv, lv* HP_LV, lv* PO_LV, lv* DE_LV) {}
+    void print() { cout << "Healer "; Character::print(); }
+    int getHP() { return hp; }
+    void setHP(int hp) { this->hp = hp; }
+    int getDefense() { return defense; }
+    int getAttack() { return power; }
+    void useSkill1(Character* target) { target->setHP(target->getHP() + 50); cout << "(Healer) uses Heal and restores 50 HP to " << target->getName() << "!" << endl; } // 治療術
+    void useSkill2(Character* target) { if (target->getHP() <= 0) target->setHP(target->getMaxHP() / 2); cout << "(Healer) uses Revive and restores " << target->getMaxHP() / 2 << " HP to " << target->getName() << "!" << endl; } // 復活術
+    void beatMonster(int exp)
+    {
+        this->exp += exp;
+        while (this->exp >= pow(this->level, 2) * EXP_LV)
+            this->levelUp(HP_LV, PO_LV, DE_LV);
+    }
+};
+class Shop {
+public:
+    vector<Equipment*> items;
+    vector<int> prices;  // 新增價格列表
+
+    Shop() {
+        // 初始化商店物品
+        items.push_back(new Equipment("Sword of Power", 0, 10, 0, 0));
+        prices.push_back(100);  // 設置價格
+        items.push_back(new Equipment("Shield of Defense", 0, 0, 10, 0));
+        prices.push_back(80);  // 設置價格
+        items.push_back(new Equipment("Ring of Magic", 0, 0, 0, 10));
+        prices.push_back(120);  // 設置價格
+    }
+
+    ~Shop() {
+        for (int i = 0; i < items.size(); i++)
+            delete items[i];
+    }
+
+    void displayItems(int availableGold) {
+        cout << "Shop Items:\n";
+        cout << "Available Gold: " << availableGold << "\n";
+        for (int i = 0; i < items.size(); i++) {
+            cout << i + 1 << ". " << items[i]->name << " (HP: " << items[i]->hpBonus
+                << ", Power: " << items[i]->powerBonus << ", Defense: " << items[i]->defenseBonus
+                << ") - " << prices[i] << " Gold\n";
+        }
+    }
+
+    Equipment* buyItem(int index) {
+        if (index >= 0 && index < items.size()) {
+            Equipment* item = items[index];
+            items.erase(items.begin() + index);
+            prices.erase(prices.begin() + index);
+            return item;
+        }
+        return nullptr;
+    }
+
+    int getItemPrice(int index) {
+        if (index >= 0 && index < prices.size()) {
+            return prices[index];
+        }
+        return -1;  // 返回 -1 表示無效的索引
+    }
+};
+class Monster : public Character {
+private:
+    
+    int difficulty; // 新增難度屬性
+public:
+    Monster(int h, int po, int diff) : Character("", 0, h, po, 0), difficulty(diff) {}  // Remove defense attribute
+    void print() { cout << "Monster "; Character::print(); }
+    int getHP() { return hp; }
+    void setHP(int hp) { this->hp = hp; }
+    int getAttack() { return power; }
+    int getDefense() { return 0; }  // No defense for the monster
+    void beatMonster(int exp) {}
+    void setAttack(int atk) { power = atk; }  // 這是新增的setAttack方法
+    void useSkill1(Character* target) {} // 怪獸沒有技能
+    void useSkill2(Character* target) {} // 怪獸沒有技能
+    int isStunned() const { return stunnedTurns > 0; }  // 獲取暈眩狀態
+    int getDifficulty() const { return difficulty; } // 獲取難度
+};
+
+class Team {
+public:
+    vector<Character*> members;
+    int monsterWins;  // 怪物勝利次數
+    int playerWins;   // 角色勝利次數
+    Team();
+    ~Team();
+    void addWarrior(string name, int lv);
+    void addWizard(string name, int lv);
+    void addTank(string name, int lv);
+    void addAssassin(string name, int lv);
+    void addHealer(string name, int lv);
+    void print();
+    void combat(Monster* m, int difficulty);
+    void memberBeatMonster(string name, int exp);
+    void resetHP();
+    void resetAttributes();  // 重置所有成員的屬性
+};
+
+Team::Team() : monsterWins(0), playerWins(0) {}
+Team::~Team() {
+    for (int i = 0; i < members.size(); i++)
+        delete members[i];
+}
+
+// 增加戰士成員
+void Team::addWarrior(string name, int lv) {
+    members.push_back(new Warrior(name, lv));
+}
+
+// 增加法師成員
+void Team::addWizard(string name, int lv) {
+    members.push_back(new Wizard(name, lv));
+}
+
+// 增加坦克成員
+void Team::addTank(string name, int lv) {
+    members.push_back(new Tank(name, lv));
+}
+
+// 增加刺客成員
+void Team::addAssassin(string name, int lv) {
+    members.push_back(new Assassin(name, lv));
+}
+
+// 增加補師成員
+void Team::addHealer(string name, int lv) {
+    members.push_back(new Healer(name, lv));
+}
+
+void Team::print() {
+    for (int i = 0; i < members.size(); i++)
+        members[i]->print();
+}
+
+void Character::setHP(int newHP) {
+    hp = min(newHP, maxHP);  // 確保血量不會超過最大血量
+}
+
+void Team::resetHP() {
+    // 遍歷所有成員，將血量設置為最大值
+    for (int i = 0; i < members.size(); i++) {
+        members[i]->setHP(members[i]->getMaxHP());  // 假設每個玩家有 getMaxHP() 方法
+    }
+}
+void Team::resetAttributes() {
+    // 遍歷所有成員，重置屬性
+    for (int i = 0; i < members.size(); i++) {
+        members[i]->resetAttributes();
+    }
+}
+bool ending = false;
+
+void Team::combat(Monster* m, int difficulty) {
+    // Reset players' HP at the beginning of each combat session
+    cout << "\nStarting battle!\n";
+    this->resetAttributes();
+    this->resetHP();
+
+    // 計算團隊的總血量和總攻擊力
+    int totalTeamHP = 0;
+    int totalTeamAttack = 0;
+    for (int i = 0; i < members.size(); i++) {
+        totalTeamHP += members[i]->getHP();
+        totalTeamAttack += members[i]->getAttack();
+    }
+
+    // 設定怪獸的血量和攻擊力根據難度調整
+    if (difficulty == 1) {
+        m->setHP(totalTeamHP * 0.8);
+        m->setAttack(totalTeamAttack * 0.8 / members.size());
+    }
+    else if (difficulty == 2) {
+        m->setHP(totalTeamHP);
+        m->setAttack(totalTeamAttack / members.size());
+    }
+    else if (difficulty == 3) {
+        m->setHP(totalTeamHP * 1.2);
+        m->setAttack(totalTeamAttack * 1.2 / members.size());
+    }
+
+    cout << "The monster's stats are: HP = " << m->getHP() << ", Power = " << m->getAttack() << "\n";
+    while (true) {
+        // 顯示玩家狀況
+        cout << "\n--- Player Stats ---\n";
+        this->print();
+
+        int action;
+        int damage;
+        vector<bool> playerDefends(members.size(), false);  // Track if players are defending
+
+        // 玩家回合
+        cout << "--- Player's Turn ---\n";
+        for (int i = 0; i < members.size(); i++) {
+            if (members[i]->getHP() > 0) {
+                cout << "Choose action for " << members[i]->getName() << " (attack 1, defend 2): ";
+                cin >> action;
+
+                if (action == 1) {
+                    // 攻擊怪獸
+                    m->setHP(m->getHP() - members[i]->getAttack());
+                    cout << members[i]->getName() << " attacks " << members[i]->getAttack() << " the monster!\n";
+                    playerDefends[i] = false;
+                }
+                else if (action == 2) {
+                    // 玩家選擇防禦
+                    playerDefends[i] = true;
+                    cout << members[i]->getName() << " chooses to defend!\n";
+                }
+               
+                cout << "Choose action for " << members[i]->getName() << " (Skill_1 = cost 50, Skill_2 = cost 70): ";
+                cin >> action;
+                if (action == 1) {
+                    // 使用技能1
+                    members[i]->spendGold(50);
+                    cout << members[i]->getName() << " uses skill 1!\n";
+                    cout << members[i]->getName();
+                    members[i]->useSkill1(m);
+                }
+                else if (action == 2) {
+                    // 使用技能2
+                    members[i]->spendGold(70);
+                    cout << members[i]->getName() << " uses skill 2!\n";
+                    cout << members[i]->getName();
+                    members[i]->useSkill2(m);
+					
+                }
+            }
+        }
+
+        // 檢查怪獸是否被打敗
+        if (m->getHP() <= 0) {
+            cout << "You have defeated the monster!\n";
+            playerWins++;  // 更新角色勝利次數
+
+            // 增加經驗並升級玩家
+            for (int i = 0; i < members.size(); i++) {
+                int gainedExp = 250 * difficulty;  // 根據難度調整經驗
+                int gainedGold = 20 * difficulty;  // 根據難度調整金幣
+                if (members[i]->getHP() > 0) {
+                    // 角色存活獲得100%經驗和金幣
+                    members[i]->beatMonster(gainedExp);
+                    members[i]->addGold(gainedGold);
+                    cout << members[i]->getName() << " gained " << gainedExp << " experience points and " << gainedGold << " gold.\n";
+                }
+                else {
+                    // 角色死亡獲得70%經驗和金幣
+                    int reducedExp = gainedExp * 0.7;
+                    int reducedGold = gainedGold * 0.7;
+                    members[i]->beatMonster(reducedExp);
+                    members[i]->addGold(reducedGold);
+                    cout << members[i]->getName() << " (dead) gained " << reducedExp << " experience points and " << reducedGold << " gold.\n";
+                }
+            }
+            break;  // 離開戰鬥循環
+        }
+
+        // 怪獸回合：在怪獸還活著的情況下攻擊
+        cout << "\n=== Monster's Turn ===\n";
+        cout << "Monster HP:" << m->getHP() << " Power:" << m->getAttack()<<endl;
+
+        // 檢查怪物是否被暈眩
+        if (m->isStunned()==1) {
+            cout << "The monster is stunned and cannot attack this turn!\n";
+            m->setStunned(false);
+        }
+        else {
+            // 怪獸的回合：隨機選擇一名玩家來攻擊
+            if (m->getHP() > 0) {  // 只有怪獸還活著才會進行攻擊
+                int targetIndex = rand() % members.size();
+
+                cout << "=== Monster attacks " << members[targetIndex]->getName() << " ===\n";
+
+                // 檢查選中的玩家是否還活著
+                if (members[targetIndex]->getHP() > 0) {
+                    if (playerDefends[targetIndex]) {
+                        // 如果玩家在防禦，則計算減少的傷害
+                        damage = max(0, m->getAttack() - members[targetIndex]->getDefense());
+                        members[targetIndex]->setHP(members[targetIndex]->getHP() - damage);
+                        cout << members[targetIndex]->getName() << " took " << damage << " damage from the monster while defending.\n";
+                    }
+                    else {
+                        // 如果玩家沒有防禦，則承受全部傷害
+                        damage = m->getAttack();
+                        members[targetIndex]->setHP(members[targetIndex]->getHP() - damage);
+                        cout << members[targetIndex]->getName() << " took " << damage << " damage from the monster.\n";
+                    }
+                }
+            }
+        }
+
+        // 檢查所有玩家是否都已死亡
+        bool allDead = true;
+        for (int i = 0; i < members.size(); i++) {
+            if (members[i]->getHP() > 0) {
+                allDead = false;  // 至少有一名玩家存活
+                ending = true;
+                break;
+            }
+        }
+
+        if (allDead) {
+            cout << "Your team has been defeated... Game Over!\n";
+            monsterWins++;  // 更新怪物勝利次數
+            ending = true;
+            return;  // 如果所有玩家都死亡，退出遊戲
+        }
+    }
+}
+int main()
+{
+    int level;
+    cout << "Select difficulty (1=Easy, 2=Normal, 3=Hard): ";
+
+    while (cin >> level)
+    {
+        if (level <= 3 && level > 0)
+            break;
+        else
+            cout << "Select difficulty (1=Easy, 2=Normal, 3=Hard): ";
+    }
+
+    Team myTeam;
+    string name;
+    int lv = 0, role = 0;
+    int timer = 0;
+    // Adding players to the team
+    while (true) {
+        cout << "Enter name, level, role (1=Warrior, 2=Wizard, 3=Tank, 4=Assassin, 5=Healer), or type 'done' to finish: ";
+        cin >> name;
+        if (name == "done") break;
+        cin >> lv >> role;
+
+        if (role == 1)
+            myTeam.addWarrior(name, lv);
+        else if (role == 2)
+            myTeam.addWizard(name, lv);
+        else if (role == 3)
+            myTeam.addTank(name, lv);
+        else if (role == 4)
+            myTeam.addAssassin(name, lv);
+        else if (role == 5)
+            myTeam.addHealer(name, lv);
+        timer++;
+    }
+    
+
+    // Start combat loop
+    while (true) {
+        for (int k = 0; k < timer; k++)
+        {
+            // 顯示玩家狀況
+            cout << myTeam.members[k]->getName() << ":" << myTeam.members[k]->getHP() << "-" << myTeam.members[k]->getAttack() << "-" << myTeam.members[k]->getDefense()  << endl;
+            cout << myTeam.members[k]->getName() << "'s turn to buy equipment\n";
+            // Create a shop and display items
+            Shop shop;
+            shop.displayItems(myTeam.members[k]->getGold());
+
+            // 讓玩家選擇購買裝備
+            int itemIndex;
+
+            cout << "Enter the number of the item you want to buy: ";
+            cin >> itemIndex;
+            int itemPrice = shop.getItemPrice(itemIndex - 1);
+            if (itemPrice != -1 && myTeam.members[k]->getGold() >= itemPrice) {
+                Equipment* boughtItem = shop.buyItem(itemIndex - 1);
+                if (boughtItem != nullptr) {
+                    // 扣除金錢
+                    myTeam.members[k]->spendGold(itemPrice);
+                    // 裝備給第一個隊伍成員
+                    myTeam.members[k]->equip(boughtItem);
+                }
+            }
+            else {
+                cout << "Not enough gold or invalid item index!" << endl;
+            }
+        }
+
+        
+        Monster mon(100, 10, level);  // 根據難度創建怪物
+        int difficulty = level;
+        myTeam.combat(&mon, difficulty);
+
+        char continuePlaying;
+        cout << "Do you want to continue to the next battle? (y/n): ";
+        cin >> continuePlaying;
+
+        if (continuePlaying != 'y' && continuePlaying != 'Y' && ending == true) {
+            cout << "Ending game...\n";
+            break; // Exit the game loop
+        }
+
+        // Ask for new difficulty
+        cout << "Select difficulty for the next battle (1=Easy, 2=Normal, 3=Hard): ";
+        cin >> difficulty;
+        // 重置所有成員的屬性
+        myTeam.resetAttributes();
+    }
+    // 顯示勝利次數
+    cout << "Player Wins: " << myTeam.playerWins << "\n";
+    cout << "Monster Wins: " << myTeam.monsterWins << "\n";
+    return 0;
+}
