@@ -31,7 +31,7 @@ protected:
     int baseDefense;  // 初始防禦力
     int gold;  // 新增金錢屬性
     int stunnedTurns;  // 修改為 int 類型，追蹤暈眩回合數
-    
+
     Equipment* equipment;  // 新增裝備屬性
     void levelUp(int hInc, int pInc, int dInc);  // 升級方法
 public:
@@ -106,8 +106,8 @@ void Character::print() {
         cout << "0";
 
     cout << "-" << this->power << "-" << this->defense;
-	if (this->name != "Monster")
-		cout << " , Gold: " << this->gold << "\n";
+    if (this->name != "Monster")
+        cout << " , Gold: " << this->gold << "\n";
 }
 
 bool Character::spendGold(int amount) {
@@ -132,8 +132,8 @@ public:
     void setHP(int hp) { this->hp = hp; }
     int getAttack() { return power; }
     int getDefense() { return defense; }
-    void useSkill1(Character* target,int targetIndex) { target->setHP(target->getHP() - (power * 1.5)); cout << "(Warrior) uses Strong Attack and deals " << power * 1.5 << " damage to the monster!" << endl; } // 強力攻擊
-    void useSkill2(Character* target,int targetIndex) { defense += 10; cout << "(Warrior) uses Defensive Stance and increases defense by 10!" << endl; } // 防禦姿態
+    void useSkill1(Character* target, int targetIndex) { target->setHP(target->getHP() - (power * 1.5)); cout << "(Warrior) uses Strong Attack and deals " << power * 1.5 << " damage to the monster!" << endl; } // 強力攻擊
+    void useSkill2(Character* target, int targetIndex) { defense += 10; cout << "(Warrior) uses Defensive Stance and increases defense by 10!" << endl; } // 防禦姿態
     void beatMonster(int exp) // function overriding
     {
         this->exp += exp;
@@ -291,7 +291,7 @@ public:
 };
 class Monster : public Character {
 private:
-    
+
     int difficulty; // 新增難度屬性
 public:
     Monster(int h, int po, int diff) : Character("", 0, h, po, 0), difficulty(diff) {}  // Remove defense attribute
@@ -384,7 +384,7 @@ bool ending = false;
 void Team::combat(Monster* m, int difficulty) {
     // Reset players' HP at the beginning of each combat session
     cout << "\nStarting battle!\n";
-    
+
     this->resetHP();
 
     // 計算團隊的總血量和總攻擊力
@@ -449,7 +449,7 @@ void Team::combat(Monster* m, int difficulty) {
                             while (members[targetIndex]->getHP() <= 0 || targetIndex == i) {
                                 targetIndex = rand() % members.size();
                             }
-                           
+
                             healer->useSkill1(members[targetIndex], targetIndex);
                         }
                         else {
@@ -464,14 +464,14 @@ void Team::combat(Monster* m, int difficulty) {
                             int targetIndex = rand() % members.size();
                             int numlive = 0;
                             for (int j = 0;j < members.size();j++)
-                                if(members[j]->getHP()<=0)
-                                     numlive++;
-                            while ((members[targetIndex]->getHP() > 0 || targetIndex == i) && numlive>0 ) {
+                                if (members[j]->getHP() <= 0)
+                                    numlive++;
+                            while ((members[targetIndex]->getHP() > 0 || targetIndex == i) && numlive > 0) {
                                 targetIndex = rand() % members.size();
-                               
+
                             }
-                          
-                             healer->useSkill2(members[targetIndex], targetIndex);
+
+                            healer->useSkill2(members[targetIndex], targetIndex);
                         }
                         else {
                             members[i]->useSkill2(m, -1);
@@ -480,7 +480,7 @@ void Team::combat(Monster* m, int difficulty) {
                 }
             }
         }
-    
+
 
         // 檢查怪獸是否被打敗
         if (m->getHP() <= 0) {
@@ -511,14 +511,14 @@ void Team::combat(Monster* m, int difficulty) {
 
         // 怪獸回合：在怪獸還活著的情況下攻擊
         cout << "\n=== Monster's Turn ===\n";
-        cout << "Monster HP:" << m->getHP() << " Power:" << m->getAttack()<<endl;
+        cout << "Monster HP:" << m->getHP() << " Power:" << m->getAttack() << endl;
 
         // 檢查怪物是否被暈眩
-        if (m->isStunned()==1) {
+        if (m->isStunned() == 1) {
             cout << "The monster is stunned and cannot attack this turn!\n";
             m->setStunned(false);
         }
-        else{
+        else {
             // 怪獸的回合：攻擊每一個玩家
             if (m->getHP() > 0) {  // 只有怪獸還活著才會進行攻擊
                 for (int i = 0; i < members.size(); i++) {
@@ -550,7 +550,7 @@ void Team::combat(Monster* m, int difficulty) {
                 ending = true;
                 break;
             }
-           
+
         }
 
         if (allDead) {
