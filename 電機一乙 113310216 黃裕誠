@@ -430,7 +430,7 @@ void Team::combat(Monster* m, int difficulty) {
                 if (action == 1) {
                     // 攻擊怪獸
                     m->setHP(m->getHP() - members[i]->getAttack());
-                    cout << members[i]->getName() << " attacks " << members[i]->getAttack() << " the monster!\n";
+                    cout << members[i]->getName() << " deal " << members[i]->getAttack() << " points of damage to the monster!\n";
                     playerDefends[i] = false;
                 }
                 else if (action == 2) {
